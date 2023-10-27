@@ -37,23 +37,25 @@ const UpdatePatientProfile = () => {
   const [phone,setPhone] = useState('');
   const [age, setAge] = useState('');
   const [gender,setGender] = useState('');
+  const user = firebase.auth().currentUser;
 
-
-  useEffect(()=>{
-    firebase.firestore()
-    .collection('users')
-    .where("designation",'==','Doctor')
-    .get()
-    .then(querySnapshot => {
-      //console.log('Total users: ', querySnapshot.size);
-      querySnapshot.forEach(documentSnapshot => {
-       console.log('User ID: ', documentSnapshot.id, documentSnapshot.data());
-        setName(documentSnapshot.data().name);
-        setid(documentSnapshot.data().user_id);
-       // console.log(documentSnapshot.data().name);
-    });
-  });
-   },[])
+  useEffect(() => {
+    firebase
+        .firestore()
+        .collection("users")
+        .where("user_id", "==", user.uid)
+        .get()
+        .then((querySnapshot) => {
+            //console.log('Total users: ', querySnapshot.size);
+            querySnapshot.forEach((documentSnapshot) => {
+                // console.log('User ID: ', documentSnaspshot.id, documentSnapshot.data());
+                setName(documentSnapshot.data().name);
+                setid(documentSnapshot.data().user_id);
+                console.log(documentSnapshot.data().name);
+                console.log(documentSnapshot.data().user_id);
+            });
+        });
+}, []);
   
    const updateProfile = ()=>{
     if(newName==''||age==''||city==''||country==''||phone==''||gender==''){

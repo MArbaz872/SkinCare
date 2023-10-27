@@ -16,7 +16,7 @@ import Dropdown from "../../components/Dropdown";
 import firebase from "firebase/compat";
 import Modal from "react-native-modal";
 // import database from '@react-native-firebase/database';
-
+import { SendNotification4 } from "../../components/PushNotification";
 export default function BookAnAppointment({ route, navigation}) {
   const [isModalVisible, setModalVisible] = useState(false);
     const docId = route.params.doc_id;
@@ -141,8 +141,8 @@ console.log("doctorid=====>",docId)
         // Handle a successful response here, e.g., show a success message
         console.log("Payment response her=======?>",data.message)
         
-        if(data.message == 'The token tok_1O0SljCdlGAtLq3UVrUBSPlb has already been used. Each token can only be used once to create a source.')
-        {
+        // if(data.message == 'The token tok_1O0SljCdlGAtLq3UVrUBSPlb has already been used. Each token can only be used once to create a source.')
+        // {
           Alert.alert("Payment successful")
           if (
             FirstName === "" ||
@@ -188,7 +188,8 @@ console.log("doctorid=====>",docId)
                   setPhoneNumber('')
                   setAddress('')
                   setChecked('')
-                  alert('Appointment Booked')
+                  SendNotification4()
+                  // alert('Appointment Booked')
       
                   console.log("data",data);
                   // SendNotification(expoPushToken);
@@ -199,9 +200,10 @@ console.log("doctorid=====>",docId)
               console.log("error--------->",error);
             }
           }
-        }else(
-          Alert.alert('Payment successful')
-        )
+        // }
+        // else(
+        //   Alert.alert('Payment successful')
+        // )
       })
       .catch((error) => {
         // Handle any errors, e.g., show an error message

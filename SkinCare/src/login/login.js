@@ -21,6 +21,7 @@ import * as Animatable from 'react-native-animatable';
 import { Colors, Icons } from '../theme';
 import { AppStatusBar, TextView, CustomButton, Loader } from '../components';
 import firebase from '../config/FirebaseConfig';
+import { SendNotification1, SendNotification5 } from '../components/PushNotification';
 
 
 const Login = () => {
@@ -125,6 +126,9 @@ const Login = () => {
           .get()
           .then((documentSnapshot) => {
             setProgress(false)
+            console.log("Designation======> now",documentSnapshot.data().isBlock)
+            // return
+            if(documentSnapshot.data().isBlock == 0){
             if (res.user.emailVerified == false) {
               navigation.replace("Email Verification");
             } else {
@@ -134,12 +138,15 @@ const Login = () => {
                 navigation.replace("MyDrawer");
                 //console.log(documentSnapshot.data().designation);
               } else {
-                navigation.replace("AdminNavigationScreen");
+                navigation.replace("AdminNavigation");
                 //console.log(documentSnapshot.data().designation);
                 //navigation.replace('DrawerNavigationScreen');
               }
               console.log("emailVerified =====", res.user.emailVerified);
               console.log("User logged-in successfully!");
+            }}
+            else{
+              SendNotification5()
             }
           });
       }).catch((error) => {
@@ -172,8 +179,9 @@ const Login = () => {
               alignSelf: 'center',
               justifyContent: 'center',
               // marginBottom: 5
+              borderRadius:30
             }}
-            source={Icons.skinlogo2}
+            source={Icons.Logonew}
           />
         )}
 
@@ -187,14 +195,14 @@ const Login = () => {
           },
         ]}>
         <TextView
-          text="Username"
+          text="Email"
           type={'normalRg'}
           style={{ color: Colors.text }}
         />
         <View style={styles.action}>
           <FontAwesome name="user-o" color={Colors.text} size={20} />
           <TextInput
-            placeholder="Your Username"
+            placeholder="Your Email"
             placeholderTextColor="#cdcdcd"
             style={[
               styles.textInput,

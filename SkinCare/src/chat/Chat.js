@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Bubble, GiftedChat, Send } from 'react-native-gifted-chat';
 import firebase from 'firebase/compat';
 import userAvatar from '../assests/images/oval.png'; // Adjust the path as needed
@@ -7,129 +7,172 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { Colors } from '../theme';
+import { SendNotification3 } from '../components/PushNotification';
+import PushNotification from "react-native-push-notification";
 
 
 export default function Chat({ route, navigation }) {
-    const { name, otherUserId, currentUserId } = route.params;
+  const { name, otherUserId, currentUserId } = route.params;
 
 
-    const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const SendNotification3 = async (message,userid) => {
+    try {
+      const userSnapshot = await firebase.firestore()
+          .collection('users')
+          .where('user_id', '==', userid)
+          .get();
 
-    useEffect(() => {
-        // Initialize Firebase Firestore
-        const db = firebase.firestore();
+      if (!userSnapshot.empty) {
+          const userData = userSnapshot.docs[0].data();
+          const userName = userData.name;
 
-        // Create a chat room ID based on user IDs
-        const chatRoomId = [currentUserId, otherUserId].sort().join('-');
+          PushNotification.createChannel(
+              {
+                  channelId: "3",
+                  channelName: "Sync Appointment",
+                  channelDescription: "To remind Doc Appointment.",
+                  soundName: "default",
+                  vibrate: true,
+              },
+              (created) => console.log(`createChannel returned '${created}'`)
+          );
 
-        // Reference to the chat room in Firestore
-        const chatRef = db.collection('chats').doc(chatRoomId);
+          PushNotification.localNotification({
+              channelId: "3",
+              smallIcon: "ic_launcher_foreground",
+              message: ` ${userName}: ${message.text}`,
+          });
+      } else {
+          console.log("User data not found.");
+      }
+  } catch (error) {
+      console.log("Error fetching user data:", error);
+  }
+  };
 
-        // Subscribe to changes in the chat messages
-        const unsubscribe = chatRef
-            .collection('messages')
-            .orderBy('createdAt', 'desc')
-            .onSnapshot((snapshot) => {
-                const newMessages = snapshot.docs.map((doc) => {
-                    const message = doc.data();
-                    return {
-                        _id: doc.id, // Use the document ID as a unique identifier
-                        ...message,
-                        createdAt: message.createdAt instanceof firebase.firestore.Timestamp
-                            ? message.createdAt.toDate()
-                            : new Date(),
-                    };
-                });
+  useEffect(() => {
+    // Initialize Firebase Firestore
+    const db = firebase.firestore();
 
-                setMessages(newMessages);
+    // Create a chat room ID based on user IDs
+    const chatRoomId = [currentUserId, otherUserId].sort().join('-');
 
-                setMessages(newMessages);
-            });
+    // Reference to the chat room in Firestore
+    const chatRef = db.collection('chats').doc(chatRoomId);
 
-        return () => {
-            // Clean up the subscription when the component unmounts
-            unsubscribe();
-        };
-    }, [currentUserId, otherUserId]);
+    // Subscribe to changes in the chat messages
+    const unsubscribe = chatRef
+      .collection('messages')
+      .orderBy('createdAt', 'desc')
+      .onSnapshot((snapshot) => {
+        const newMessages = snapshot.docs.map((doc) => {
+          const message = doc.data();
+          return {
+            _id: doc.id, // Use the document ID as a unique identifier
+            ...message,
+            createdAt: message.createdAt instanceof firebase.firestore.Timestamp
+              ? message.createdAt.toDate()
+              : new Date(),
+          };
+        });
 
-    const renderSend = (props) => {
-        return (
-            <Send {...props}>
-                <View style={{ marginBottom: 5 }} >
-  
-            <MaterialCommunityIcons name="send-circle" color={'#130C52'} size={30} />
-                </View>
-            </Send>
-        )
-    }
+        setMessages(newMessages);
 
-    const scrollToBottomComponent = () => {
-        return (
-            <FontAwesome name="angle-double-down" color={'#130C52'} size={30} />
-        )
-    }
-
-    const onSend = async (newMessages = []) => {
-        // Add new messages to Firestore
-        const db = firebase.firestore();
-        const chatRoomId = [currentUserId, otherUserId].sort().join('-');
-        const chatRef = db.collection('chats').doc(chatRoomId);
-
-        for (let i = 0; i < newMessages.length; i++) {
-            const { text, user } = newMessages[i];
-            const message = {
-                text,
-                user: {
-                    _id: user._id,
-                    avatar: userAvatar
-                    //   name: user.name, // Uncomment this line if you want to include the sender's name
-                },
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            };
-
-            await chatRef.collection('messages').add(message);
+        setMessages(newMessages);
+       // Check if there are new messages and send a notification for the latest one
+       if (newMessages.length > 0) {
+        const latestMessage = newMessages[0]; // Get the latest message
+        if (latestMessage.user._id !== currentUserId) {
+            SendNotification3(latestMessage,currentUserId); // Send a push notification if the sender is not the current user
         }
+    }
+      });
+
+    return () => {
+      // Clean up the subscription when the component unmounts
+      unsubscribe();
     };
+  }, [currentUserId, otherUserId]);
 
+  const renderSend = (props) => {
     return (
-        <View style={{ flex: 1 }}>
-             <View style={styles.customHeader}>
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <MaterialIcons name="arrow-back" size={25} color="gray" style={styles.backIcon} />
-      </TouchableOpacity>
-      <Text style={styles.headerText}>{name}</Text>
-      <View style={{ width: 60 }}></View>
-    </View>
-            <GiftedChat
-                messages={messages}
-                onSend={(newMessages) => onSend(newMessages)}
-                user={{
-                    _id: currentUserId,
-                    avatar: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fpngtree.com%2Fso%2Finstagram&psig=AOvVaw30FYeGdNAVoXA4WDDcrFgP&ust=1694346285138000&source=images&cd=vfe&opi=89978449&ved=0CBAQjRxqFwoTCICqo_O5nYEDFQAAAAAdAAAAABAE',
-                    // Add the name property here if needed
+      <Send {...props}>
+        <View style={{ marginBottom: 5 }} >
 
-                }}
-                renderSend={renderSend}
-                scrollToBottom
-                scrollToBottomComponent={scrollToBottomComponent}
-
-
-                renderBubble={(props) => {
-                    return (
-                        <Bubble
-                            {...props}
-                            wrapperStyle={{
-                                right: {
-                                    backgroundColor: '#130C52',
-                                },
-
-                            }}
-                        />
-                    );
-                }}
-            />
+          <MaterialCommunityIcons name="send-circle" color={'#130C52'} size={30} />
         </View>
-    );
+      </Send>
+    )
+  }
+
+  const scrollToBottomComponent = () => {
+    return (
+      <FontAwesome name="angle-double-down" color={'#130C52'} size={30} />
+    )
+  }
+
+  const onSend = async (newMessages = []) => {
+    // Add new messages to Firestore
+    const db = firebase.firestore();
+    const chatRoomId = [currentUserId, otherUserId].sort().join('-');
+    const chatRef = db.collection('chats').doc(chatRoomId);
+    // Call SendNotification3 when a new message arrives
+    for (let i = 0; i < newMessages.length; i++) {
+      const { text, user } = newMessages[i];
+      const message = {
+        text,
+        user: {
+          _id: user._id,
+          avatar: userAvatar
+          //   name: user.name, // Uncomment this line if you want to include the sender's name
+        },
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      await chatRef.collection('messages').add(message);
+    }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={styles.customHeader}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <MaterialIcons name="arrow-back" size={25} color="gray" style={styles.backIcon} />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>{name}</Text>
+        <View style={{ width: 60 }}></View>
+      </View>
+      <GiftedChat
+        messages={messages}
+        onSend={(newMessages) => onSend(newMessages)}
+        user={{
+          _id: currentUserId,
+          avatar: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fpngtree.com%2Fso%2Finstagram&psig=AOvVaw30FYeGdNAVoXA4WDDcrFgP&ust=1694346285138000&source=images&cd=vfe&opi=89978449&ved=0CBAQjRxqFwoTCICqo_O5nYEDFQAAAAAdAAAAABAE',
+          // Add the name property here if needed
+
+        }}
+        renderSend={renderSend}
+        scrollToBottom
+        scrollToBottomComponent={scrollToBottomComponent}
+
+
+        renderBubble={(props) => {
+          return (
+            <Bubble
+              {...props}
+              wrapperStyle={{
+                right: {
+                  backgroundColor: '#130C52',
+                },
+
+              }}
+            />
+          );
+        }}
+      />
+    </View>
+  );
 }
 const styles = StyleSheet.create({
   container: {
@@ -214,24 +257,24 @@ const styles = StyleSheet.create({
   value_width: {
     width: "60%",
   },
-  customHeader:{
-    flexDirection:'row',
-    width:'100%',
-    height:'7%',
-    alignItems:'center',
-    justifyContent:'space-between',
-    backgroundColor:'#130C52',
-    elevation:10
+  customHeader: {
+    flexDirection: 'row',
+    width: '100%',
+    height: '7%',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#130C52',
+    elevation: 10
 
   },
-  backIcon:{
-    color:'white'
+  backIcon: {
+    color: 'white'
 
   },
   headerText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color:'white'
+    color: 'white'
   },
 });
 

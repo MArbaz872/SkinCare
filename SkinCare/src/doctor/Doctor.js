@@ -15,7 +15,9 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Foundation from 'react-native-vector-icons/Foundation';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SendNotification1 } from "../components/PushNotification";
 function Doctor({ navigation }) {
   const [AppointmentList, setAppointmentList] = React.useState([]);
   const [token, setToken] = React.useState("");
@@ -47,7 +49,7 @@ function Doctor({ navigation }) {
               docId: documentSnapShot.val().doc_id,
             });
 
-            setAppointmentList(array);
+            setAppointmentList(array.reverse());
           });
         });
     } catch (error) {
@@ -61,6 +63,9 @@ function Doctor({ navigation }) {
         data={AppointmentList}
         //  keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
+          if(item){
+            SendNotification1(AppointmentList.length,AppointmentList[0].docId)
+          }
           return (
             <Card
               onPress={() =>
@@ -124,6 +129,13 @@ function Doctor({ navigation }) {
                   <Text style={styles.cardText}>
                     Appointment time:{" "}
                     <Text style={{ fontWeight: "normal" }}>{item.time}</Text>
+                  </Text>
+                </View>
+                <View style={styles.iconTextRow}>
+                  <MaterialIcons name="payments" size={20} color="#245e46" />
+                  <Text style={styles.cardText}>
+                    Payment:{" "}
+                    <Text style={{ fontWeight: "normal" }}>Success</Text>
                   </Text>
                 </View>
               </View>

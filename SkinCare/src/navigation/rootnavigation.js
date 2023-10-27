@@ -26,6 +26,8 @@ import LearningResourcesStack from '../screen/patient/learningresources';
 import SearchScreen from '../screen/patient/SearchScreen';
 import BookAnAppointment from '../screen/patient/bookAppointment';
 
+// ------------Admin----------------------
+import AdminNavigation from '../Admin/AdminNavigation';
 // ------------Chat----------------------
 import Chat from '../chat/Chat';
 
@@ -68,6 +70,8 @@ const RootNavigator = () => {
                 <Stack.Screen name="SearchScreen" component={SearchScreen} options={options} />
                 <Stack.Screen name="BookAnAppointment" component={BookAnAppointment} options={options} />
 
+                  {/* ------------------------Admin------------------------------------------- */}
+                  <Stack.Screen name="AdminNavigation" component={AdminNavigation} options={options} />
                   {/* ------------------------Chat------------------------------------------- */}
                   <Stack.Screen name="Chat" component={Chat} options={options} />
             </Stack.Navigator>

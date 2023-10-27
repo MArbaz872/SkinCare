@@ -152,6 +152,7 @@ const Signup = () =>{
                   name: full_Name,
                   email: email,
                   designation: value,
+                  isBlock: 0,
                   user_id: res.user.uid,
     
                   age: Age,

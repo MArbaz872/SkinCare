@@ -80,7 +80,7 @@ const DoctorTab=()=> {
           ),
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="DocNotification"
         component={DocNotification}
          options={{
@@ -89,7 +89,7 @@ const DoctorTab=()=> {
             <Ionicons name="notifications-sharp" color={color} size={26} />
           ),
         }}
-      />
+      /> */}
     
     
       

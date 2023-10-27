@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
@@ -19,6 +19,7 @@ const DrawerContent = () => {
     navigation.dispatch(DrawerActions.closeDrawer()); // Close the drawer
     navigation.navigate(screenName); // Navigate to the desired screen
   };
+  useEffect(() => {
   if(name == ''){
     firebase.firestore()
       .collection('users')
@@ -31,11 +32,14 @@ const DrawerContent = () => {
               // console.log('User ID: =========>', documentSnapshot.id, documentSnapshot.data());
               setName(documentSnapshot.data().name);
               setEmail(documentSnapshot.data().email);
+              console.log(documentSnapshot.data().name);
+                console.log(documentSnapshot.data().user_id);
           })
       }).catch(error => {
         console.log("errror====>",error)
       })
     }
+  },[])
     const userSignOut = ()=>{
       firebase.auth().signOut();
       console.log("Log Out Successfully");
@@ -115,13 +119,13 @@ const DrawerContent = () => {
           <Text style={styles.menuText}>Learning Resource</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.menuItem}
           onPress={() => navigateToScreen("PatientProfile")}
         >
           <MaterialIcons name="person" size={24} color={Colors.white} />
           <Text style={styles.menuText}>Notifications</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
 
       </View>
