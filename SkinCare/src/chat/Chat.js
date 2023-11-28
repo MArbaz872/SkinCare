@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Linking, Platform } from 'react-native';
 import { Bubble, GiftedChat, Send } from 'react-native-gifted-chat';
 import firebase from 'firebase/compat';
 import userAvatar from '../assests/images/oval.png'; // Adjust the path as needed
@@ -15,7 +15,12 @@ export default function Chat({ route, navigation }) {
   const { name, otherUserId, currentUserId } = route.params;
 
 
+
   const [messages, setMessages] = useState([]);
+  const [otherUserData, setOtherUserData] = useState('');
+
+  console.log('here is other user data user data ===>',otherUserData.phone)
+
   const SendNotification3 = async (message,userid) => {
     try {
       const userSnapshot = await firebase.firestore()
@@ -52,6 +57,7 @@ export default function Chat({ route, navigation }) {
   };
 
   useEffect(() => {
+
     // Initialize Firebase Firestore
     const db = firebase.firestore();
 
@@ -95,6 +101,31 @@ export default function Chat({ route, navigation }) {
     };
   }, [currentUserId, otherUserId]);
 
+
+
+  useEffect(() => {
+    // Fetch other user's data when otherUserId changes
+    const fetchOtherUserData = async () => {
+      try {
+        const userSnapshot = await firebase.firestore()
+          .collection('users')
+          .where('user_id', '==', otherUserId)
+          .get();
+
+        if (!userSnapshot.empty) {
+          const userData = userSnapshot.docs[0].data();
+          setOtherUserData(userData);
+        } else {
+          console.log("Other user data not found.");
+        }
+      } catch (error) {
+        console.log("Error fetching other user data:", error);
+      }
+    };
+
+    fetchOtherUserData(); // Call the function when the component mounts or otherUserId changes
+  }, [otherUserId]);
+
   const renderSend = (props) => {
     return (
       <Send {...props}>
@@ -134,6 +165,27 @@ export default function Chat({ route, navigation }) {
     }
   };
 
+const openDialScreen = () => {
+  try {
+    const phoneNumber = otherUserData.phone;
+
+    if (!phoneNumber) {
+      Alert.alert('Phone number is missing.');
+      return;
+    }
+
+    const number = `tel:${phoneNumber}`;
+
+    console.log('Dialing phone number:', number);
+
+    Linking.openURL(number);
+  } catch (error) {
+    console.error('Error opening dial screen:', error);
+  }
+};
+
+
+
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.customHeader}>
@@ -141,6 +193,9 @@ export default function Chat({ route, navigation }) {
           <MaterialIcons name="arrow-back" size={25} color="gray" style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.headerText}>{name}</Text>
+        <TouchableOpacity onPress={openDialScreen}>
+          <MaterialIcons name="phone" size={25} color="white" style={styles.backIcon2} />
+        </TouchableOpacity>
         <View style={{ width: 60 }}></View>
       </View>
       <GiftedChat
@@ -269,6 +324,11 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     color: 'white'
+
+  },
+  backIcon2: {
+    color: 'white',
+    left:70
 
   },
   headerText: {
