@@ -11,6 +11,7 @@ import Home from '../screen/BottomTabs/Home';
 import Doctor from '../screen/BottomTabs/Doctor';
 import More from '../screen/BottomTabs/More';
 import ResultScreen from '../screen/BottomTabs/ResultScreen';
+// import Call from '../components/Call';
 
 // import { connect, useSelector } from 'react-redux';
 
@@ -87,6 +88,17 @@ const Tabs=()=> {
           headerShown: false,
         }}
       />
+      {/* <Tab.Screen
+        name="Call"
+        component={Call}
+         options={{
+          tabBarLabel: 'Phone',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="call-outline" color={color} size={26} />
+          ),
+          headerShown: false,
+        }}
+      /> */}
       <Tab.Screen
         name="More"
         component={More}
