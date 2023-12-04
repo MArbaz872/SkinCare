@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Linking, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Linking, Platform, PermissionsAndroid } from 'react-native';
 import { Bubble, GiftedChat, Send } from 'react-native-gifted-chat';
 import firebase from 'firebase/compat';
 import userAvatar from '../assests/images/oval.png'; // Adjust the path as needed
@@ -9,6 +9,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { Colors } from '../theme';
 import { SendNotification3 } from '../components/PushNotification';
 import PushNotification from "react-native-push-notification";
+import Communications from 'react-native-communications';
 
 
 export default function Chat({ route, navigation }) {
@@ -165,22 +166,39 @@ export default function Chat({ route, navigation }) {
     }
   };
 
-const openDialScreen = () => {
+const openDialScreen = async () => {
+
+  const phoneNumber = otherUserData.phone;
+  Communications.phonecall(phoneNumber, true)
+  return
+
   try {
-    const phoneNumber = otherUserData.phone;
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+      {
+        title: 'Phone Call Permission',
+        message: 'App needs permission to make phone calls.',
+      }
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('Phone call permission granted');
+      const phoneNumber = otherUserData.phone;
 
-    if (!phoneNumber) {
-      Alert.alert('Phone number is missing.');
-      return;
+      if (!phoneNumber) {
+        Alert.alert('Phone number is missing.');
+        return;
+      }
+  
+      const number = `tel:${phoneNumber}`;
+  
+      console.log('Dialing phone number:', number);
+  
+      Linking.openURL(number);
+    } else {
+      console.log('Phone call permission denied');
     }
-
-    const number = `tel:${phoneNumber}`;
-
-    console.log('Dialing phone number:', number);
-
-    Linking.openURL(number);
-  } catch (error) {
-    console.error('Error opening dial screen:', error);
+  } catch (err) {
+    console.warn(err);
   }
 };
 
