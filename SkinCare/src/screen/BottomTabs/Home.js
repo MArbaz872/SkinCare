@@ -5,6 +5,7 @@ import firebase from 'firebase/compat';
 import { Cameraper } from '../../components/Permission';
 import { SendNotification2 } from '../../components/PushNotification';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import Spinner from 'react-native-loading-spinner-overlay';
 
 function Home({ navigation }) {
   const [description, setDescription] = useState('');
@@ -16,6 +17,7 @@ function Home({ navigation }) {
   const [userDataModalContent, setUserDataModalContent] = useState(null); // State to store user data for the modal
   const [prediction, setprediction] = useState(''); // State to store user data for the modal
   const user = firebase.auth().currentUser;
+  const [spinner, setSpinner] = useState(false)
 
   const [userData, setUserData] = useState({
     name: '',
@@ -70,7 +72,7 @@ function Home({ navigation }) {
   const openCamera = async () => {
     try {
       setIsOpen(true);
-  
+      setIsModalVisible(false);
       const options = {
         storageOptions: {
           path: 'images',
@@ -83,10 +85,16 @@ function Home({ navigation }) {
         setIsOpen(false);
         setIsModalVisible(false);
   
+
         if (!response.didCancel) {
           const imageUri = response.assets[0];
-  
+  setSpinner(true)
           try {
+            if (!imageUri) {
+              console.log('No image to send.');
+              return;
+            }
+  
             const apiUrl = 'http://3.91.227.53:8000/'; // Update the API endpoint
   
             const formData = new FormData();
@@ -96,7 +104,7 @@ function Home({ navigation }) {
               name: imageUri.fileName, // Update the name if needed
             });
   
-            const apiResponse = await fetch(apiUrl, {
+            const response = await fetch(apiUrl, {
               method: 'POST',
               body: formData,
               headers: {
@@ -105,28 +113,48 @@ function Home({ navigation }) {
               },
             });
   
-            const responseData = await apiResponse.json(); // assuming the server returns JSON
+            const responseData = await response.json(); // assuming the server returns JSON
   
             console.log('Server Response:', responseData);
   
-            if (apiResponse.ok) {
-              setIsModalVisible(false);
-            setprediction(responseData)
-            console.log('Image sent successfully.',responseData);
-            setTimeout(() => {
-              setIsModalVisible2(true)
-            }, 2000);
+            if (response.ok) {
+              
+              setprediction(responseData)
+              console.log('Image sent successfully.',responseData);
+                // setIsModalVisible2(true)
+                // navigation.navigate('Report', { userData, prediction });
+                try {
+                      firebase.firestore().collection("report").doc(userData.id).set({
+                        name: userData.name,
+                        email: userData.email,
+                        user_id:userData.id,
+                        age: userData.age,
+                        city: userData.city,
+                        country: userData.country,
+                        gender: userData.gender,
+                        phone: userData.phone,
+                        prediction:responseData.prediction
+                      });
+                      setSpinner(false)
+                      Alert.alert(" Report Generate successfully!");
+                
+                    
+                
+                } catch (error) {
+                  // setProgress(false)
+                  console.log(error);
+                }
+              // You can handle the success case here
             } else {
               console.log(
                 'Failed to send image. Server returned:',
-                apiResponse.status,
-                apiResponse.statusText
+                response.status,
+                response.statusText
               );
-              // Handle the failure case here
+              // You can handle the failure case here
             }
           } catch (error) {
             console.log('Error during image upload:', error);
-  
             if (
               error instanceof TypeError &&
               error.message === 'Network request failed'
@@ -137,6 +165,8 @@ function Home({ navigation }) {
             }
           }
         }
+        setSpinner(false)
+        setIsModalVisible(false);
       });
     } catch (error) {
       console.error('Error during camera launch:', error);
@@ -167,6 +197,8 @@ const openImageGallery = async () => {
 
       if (!response.didCancel) {
         const imageUri = response.assets[0];
+        setIsModalVisible(false);
+ setSpinner(true)
 
         try {
           if (!imageUri) {
@@ -197,12 +229,32 @@ const openImageGallery = async () => {
           console.log('Server Response:', responseData);
 
           if (response.ok) {
-            setIsModalVisible(false);
+           
             setprediction(responseData)
             console.log('Image sent successfully.',responseData);
-            setTimeout(() => {
-              setIsModalVisible2(true)
-            }, 2000);
+              // setIsModalVisible2(true)
+              // navigation.navigate('Report', { userData, prediction });
+              try {
+                    firebase.firestore().collection("report").doc(userData.id).set({
+                      name: userData.name,
+                      email: userData.email,
+                      user_id:userData.id,
+                      age: userData.age,
+                      city: userData.city,
+                      country: userData.country,
+                      gender: userData.gender,
+                      phone: userData.phone,
+                      prediction:responseData.prediction
+                    });
+                    Alert.alert(" Report Generate successfully!");
+                    setSpinner(false)
+                  
+              
+              } catch (error) {
+                // setProgress(false)
+                console.log(error);
+              }
+            
             
             
             // You can handle the success case here
@@ -234,6 +286,7 @@ const openImageGallery = async () => {
 
 // ... (remaining code)
   // Second Modal
+  console.log('Predictiopn======>',prediction)
   const renderUserDataModalContent = () => {
     return (
       <View style={styles.userDataContainer}>
@@ -304,6 +357,46 @@ const openImageGallery = async () => {
         )}
       </View>
     </View>
+    <View>
+    </View>
+
+<View style={styles.formContainer}>
+  <Text style={styles.formTitle}>User Data</Text>
+  <View style={styles.formField}>
+    <Text style={styles.formLabel}>Name:</Text>
+    <Text style={styles.formValue}>{userData.name}</Text>
+  </View>
+  <View style={styles.formField}>
+    <Text style={styles.formLabel}>Email:</Text>
+    <Text style={styles.formValue}>{userData.email}</Text>
+  </View>
+  <View style={styles.formField}>
+    <Text style={styles.formLabel}>Age:</Text>
+    <Text style={styles.formValue}>{userData.age}</Text>
+  </View>
+  <View style={styles.formField}>
+    <Text style={styles.formLabel}>city:</Text>
+    <Text style={styles.formValue}>{userData.city}</Text>
+  </View>
+  <View style={styles.formField}>
+    <Text style={styles.formLabel}>Country:</Text>
+    <Text style={styles.formValue}>{userData.country}</Text>
+  </View>
+  <View style={styles.formField}>
+    <Text style={styles.formLabel}>Gender:</Text>
+    <Text style={styles.formValue}>{userData.gender}</Text>
+  </View>
+  <View style={styles.formField}>
+    <Text style={styles.formLabel}>Phone:</Text>
+    <Text style={styles.formValue}>{userData.phone}</Text>
+  </View>
+  <View style={styles.formField}>
+    <Text style={styles.formLabel}>Prediction:</Text>
+    <Text style={styles.formValue}>{prediction.prediction}</Text>
+  </View>
+  {/* Add more form fields for other user data */}
+</View>
+
 
     <Modal visible={isModalVisible} transparent={true} animationType="fade">
       <TouchableOpacity style={styles.modalContainer} onPress={closeModal} >
@@ -343,15 +436,21 @@ const openImageGallery = async () => {
           </View>
         </View>
       </Modal>
+      <Spinner
+        visible={spinner}
+        textContent={'Generating report...'}
+        textStyle={{ color:'#05375a', fontFamily:'semiBold' }}
+
+      />
 
   </View>
 }
 const styles = StyleSheet.create({
   maincontainer: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: 'column',
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: 'center',
     padding: 25
   },
   customDiv: {
@@ -461,6 +560,31 @@ const styles = StyleSheet.create({
   modalText: {
     marginBottom: 15,
     textAlign: 'center',
+  },
+  formContainer: {
+    width:'90%',
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 5,
+    // opacity: 0.7
+  },
+  formTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  formField: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  formLabel: {
+    fontWeight: 'bold',
+  },
+  formValue: {
+    marginLeft: 10,
   },
 });
 export default Home;
