@@ -169,7 +169,9 @@ export default function Chat({ route, navigation }) {
 const openDialScreen = async () => {
   try {
     const phoneNumber = otherUserData.phone;
-    Communications.phonecall(phoneNumber, true)
+    console.log("Phone Number====>",phoneNumber)
+    Linking.openURL(`tel:${phoneNumber}`)
+    // Communications.phonecall(phoneNumber, true)
   
   
   } catch (err) {
