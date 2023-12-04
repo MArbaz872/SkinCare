@@ -167,38 +167,13 @@ export default function Chat({ route, navigation }) {
   };
 
 const openDialScreen = async () => {
-
-  const phoneNumber = otherUserData.phone;
-  Communications.phonecall(phoneNumber, true)
-  return
-
   try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.CALL_PHONE,
-      {
-        title: 'Phone Call Permission',
-        message: 'App needs permission to make phone calls.',
-      }
-    );
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('Phone call permission granted');
-      const phoneNumber = otherUserData.phone;
-
-      if (!phoneNumber) {
-        Alert.alert('Phone number is missing.');
-        return;
-      }
+    const phoneNumber = otherUserData.phone;
+    Communications.phonecall(phoneNumber, true)
   
-      const number = `tel:${phoneNumber}`;
   
-      console.log('Dialing phone number:', number);
-  
-      Linking.openURL(number);
-    } else {
-      console.log('Phone call permission denied');
-    }
   } catch (err) {
-    console.warn(err);
+    console.warn('num not share===>',err);
   }
 };
 
